@@ -50,23 +50,27 @@ fn calculate_gol(gd: &mut GameData) {
 
 fn render_gol(gd: &GameData, terminal: &mut Terminal<CrosstermBackend<Stdout>>) -> Result<()> {
     terminal.draw(|frame| {
-        // let area = frame.size();
+        // Upper: ▀
+        // Lower: ▄
+        // Full:  █
 
-        for row in 0..gd.board.len() {
-            for col in 0..gd.board[row].len() {
+        for col in 0..gd.board.len() {
+            for row in 0..gd.board[col].len() / 2 {
                 let area = Rect {
-                    x: row as u16 * 1,
-                    y: col as u16,
+                    x: col as u16,
+                    y: row as u16,
                     width: 1,
                     height: 1,
                 };
 
-                let mut text = "  ".into();
-                if gd.board[row][col] != 0 {
-                    //text = "██".green();
-                    text = (" ".to_owned() + &gd.board[row][col].to_string().to_owned())
-                        .white()
-                        .on_cyan();
+                let mut text = " ".into();
+                if gd.board[col][row * 2] != 0 && gd.board[col][row * 2 + 1] != 0 {
+                    //text = "█".green();
+                    text = "█".white();
+                } else if gd.board[col][row * 2] != 0 {
+                    text = "▀".white();
+                } else if gd.board[col][row * 2 + 1] != 0 {
+                    text = "▄".white()
                 }
 
                 frame.render_widget(text, area);
