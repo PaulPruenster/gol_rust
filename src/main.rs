@@ -13,6 +13,22 @@ use std::{
     time::Duration,
 };
 
+struct GameData {
+    width: i32,
+    height: i32,
+    board: Vec<Vec<i32>>,
+    game_running: bool,
+    reload: bool,
+    color: Color,
+}
+
+enum Color {
+    CYAN,
+    PINK,
+    GREEN,
+    WHITE,
+}
+
 fn count_neighbors(gd: &mut GameData, row: i32, col: i32) -> i32 {
     let mut count = 0;
     for i in row - 1..row + 2 {
@@ -72,7 +88,14 @@ fn render_gol(gd: &GameData, terminal: &mut Terminal<CrosstermBackend<Stdout>>) 
                     text = "▄".cyan()
                 }
 
-                frame.render_widget(text, area);
+                let colored_text: Span = match gd.color {
+                    Color::CYAN => text.cyan(),
+                    Color::PINK => text.magenta(),
+                    Color::GREEN => text.green(),
+                    Color::WHITE => text.white(),
+                };
+
+                frame.render_widget(colored_text, area);
             }
         }
     })?;
@@ -90,6 +113,15 @@ fn handle_keys(gd: &mut GameData) -> Result<()> {
             if key.kind == KeyEventKind::Press && key.code == KeyCode::Char('r') {
                 gd.reload = true;
             }
+
+            if key.kind == KeyEventKind::Press && key.code == KeyCode::Char('c') {
+                gd.color = match gd.color {
+                    Color::CYAN => Color::PINK,
+                    Color::PINK => Color::GREEN,
+                    Color::GREEN => Color::WHITE,
+                    Color::WHITE => Color::CYAN,
+                }
+            }
         }
     }
     Ok(())
@@ -106,6 +138,7 @@ fn init_random(terminal: &Terminal<CrosstermBackend<Stdout>>) -> Result<GameData
         board: vec![vec![0; h]; w],
         game_running: true,
         reload: false,
+        color: Color::CYAN,
     };
 
     for row in 0..gd.board.len() {
@@ -117,14 +150,6 @@ fn init_random(terminal: &Terminal<CrosstermBackend<Stdout>>) -> Result<GameData
     }
 
     Ok(gd)
-}
-
-struct GameData {
-    width: i32,
-    height: i32,
-    board: Vec<Vec<i32>>,
-    game_running: bool,
-    reload: bool,
 }
 
 fn main() -> Result<()> {
