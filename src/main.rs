@@ -5,7 +5,7 @@ use crossterm::{
 };
 use ratatui::{
     layout::Rect,
-    prelude::{CrosstermBackend, Stylize, Terminal},
+    prelude::{CrosstermBackend, Span, Stylize, Terminal},
 };
 use std::{
     io::{stdout, Result, Stdout},
@@ -31,8 +31,8 @@ fn count_neighbors(gd: &mut GameData, row: i32, col: i32) -> i32 {
 fn calculate_gol(gd: &mut GameData) {
     let mut tmp_board = vec![vec![0; gd.height as usize]; gd.width as usize];
 
-    for i in 0..gd.board.len() {
-        for j in 0..gd.board[i].len() {
+    for i in 0..gd.width as usize {
+        for j in 0..gd.height as usize {
             let n_alive = count_neighbors(gd, i as i32, j as i32);
 
             if gd.board[i][j] != 0 && (n_alive == 2 || n_alive == 3) {
@@ -63,14 +63,13 @@ fn render_gol(gd: &GameData, terminal: &mut Terminal<CrosstermBackend<Stdout>>) 
                     height: 1,
                 };
 
-                let mut text = " ".into();
+                let mut text: Span = " ".into();
                 if gd.board[col][row * 2] != 0 && gd.board[col][row * 2 + 1] != 0 {
-                    //text = "█".green();
-                    text = "█".white();
+                    text = "█".cyan();
                 } else if gd.board[col][row * 2] != 0 {
-                    text = "▀".white();
+                    text = "▀".cyan();
                 } else if gd.board[col][row * 2 + 1] != 0 {
-                    text = "▄".white()
+                    text = "▄".cyan()
                 }
 
                 frame.render_widget(text, area);
@@ -98,7 +97,7 @@ fn handle_keys(gd: &mut GameData) -> Result<()> {
 
 fn init_random(terminal: &Terminal<CrosstermBackend<Stdout>>) -> Result<GameData> {
     let terminal_size = terminal.size()?;
-    let h: usize = terminal_size.height.into();
+    let h: usize = terminal_size.height as usize * 2;
     let w: usize = terminal_size.width.into();
 
     let mut gd = GameData {
@@ -138,9 +137,13 @@ fn main() -> Result<()> {
     let mut gd: GameData = init_random(&terminal)?;
 
     while gd.game_running {
-        // re init game on resize of terminal
+        // re init game on resize of terminal or r button press
         let term_size = terminal.size()?;
-        if gd.reload || term_size.width as i32 != gd.width || term_size.height as i32 != gd.height {
+        if gd.reload
+            || term_size.width as i32 != gd.width
+            || term_size.height as i32 * 2 != gd.height
+        {
+            gd.reload = false;
             gd = init_random(&terminal)?;
         }
 
