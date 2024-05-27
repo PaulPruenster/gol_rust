@@ -127,7 +127,10 @@ fn handle_keys(gd: &mut GameData) -> Result<()> {
     Ok(())
 }
 
-fn init_random(terminal: &Terminal<CrosstermBackend<Stdout>>) -> Result<GameData> {
+fn init_random(
+    terminal: &Terminal<CrosstermBackend<Stdout>>,
+    old_color: Option<Color>,
+) -> Result<GameData> {
     let terminal_size = terminal.size()?;
     let h: usize = terminal_size.height as usize * 2;
     let w: usize = terminal_size.width.into();
@@ -138,7 +141,7 @@ fn init_random(terminal: &Terminal<CrosstermBackend<Stdout>>) -> Result<GameData
         board: vec![vec![0; h]; w],
         game_running: true,
         reload: false,
-        color: Color::CYAN,
+        color: old_color.unwrap_or(Color::CYAN),
     };
 
     for row in 0..gd.board.len() {
@@ -159,7 +162,7 @@ fn main() -> Result<()> {
     let mut terminal = Terminal::new(CrosstermBackend::new(stdout()))?;
     terminal.clear()?;
 
-    let mut gd: GameData = init_random(&terminal)?;
+    let mut gd: GameData = init_random(&terminal, None)?;
 
     while gd.game_running {
         // re init game on resize of terminal or r button press
@@ -169,7 +172,7 @@ fn main() -> Result<()> {
             || term_size.height as i32 * 2 != gd.height
         {
             gd.reload = false;
-            gd = init_random(&terminal)?;
+            gd = init_random(&terminal, Some(gd.color))?;
         }
 
         calculate_gol(&mut gd);
